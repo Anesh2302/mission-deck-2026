@@ -15,7 +15,6 @@ const {
   readJsonBody,
   sendConfirmationEmail,
 } = require("./_lib");
-const { hashPassword } = require("./auth_helpers");
 
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
@@ -69,11 +68,8 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const passwordHash = await hashPassword(value.password);
-    const { password, ...safeValue } = value;
     const doc = {
-      ...safeValue,
-      passwordHash,
+      ...value,
       registrationId: newRegistrationId(),
       submittedAt: new Date().toISOString(),
     };

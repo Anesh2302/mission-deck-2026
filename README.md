@@ -102,13 +102,10 @@ the participant heard about the event, and agreement to the rules.
 
 The admin key is compared with `crypto.timingSafeEqual`, so it cannot be probed byte by byte.
 
-## Team workspace and scoring
+## Scoring
 
-- `/user.html` is the team login and workspace. The team name is the username; registration creates a password hash and never stores the plain password.
-- Teams can update their problem statement and solution after logging in. The mission desk mark is visible to the team but cannot be edited there.
 - `/admin.html` is the organiser control room. It lists team members, domain, problem statement, solution and provides a 0–30 mark input per team.
 - `/scoresheet.html` is a public, read-only leaderboard sorted by mark from highest to lowest; marks are entered only in the protected admin panel.
-- Add a long random `SESSION_SECRET` environment variable in Vercel for signing team login cookies. If it is omitted, the server falls back to `ADMIN_KEY`; set both explicitly in production.
 
 ## Organiser dashboard
 
@@ -137,7 +134,7 @@ The API needs Node, so use the bundled helper or `vercel dev`:
 ```bash
 npm install
 # terminal 1 - static site + api/ on http://localhost:3100
-set SUPABASE_URL=...&& set SUPABASE_SECRET_KEY=...&& set ADMIN_KEY=...&& set SESSION_SECRET=...&& node dev-host.cjs
+set SUPABASE_URL=...&& set SUPABASE_SECRET_KEY=...&& set ADMIN_KEY=...&& node dev-host.cjs
 # or, with the Vercel CLI (closest to production):
 npx vercel dev
 ```
@@ -151,7 +148,7 @@ try to build the leftover Next.js app. Keep the project's Framework Preset on **
 
 1. Push the repo.
 2. Vercel → **New Project** → import → preset **Other**.
-3. Add `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `ADMIN_KEY` and `SESSION_SECRET` under **Environment Variables**.
+3. Add `SUPABASE_URL`, `SUPABASE_SECRET_KEY` and `ADMIN_KEY` under **Environment Variables**.
 4. Deploy. `/`, `/admin.html` and `/api/*` all work immediately.
 
 ## Before you go live
