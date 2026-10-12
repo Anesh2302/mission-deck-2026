@@ -31,7 +31,7 @@ const PARTICIPANT_KEYS = [
   "#",
   "Registration ID",
   "Entry format",
-  "Team / alias",
+  "Participant",
   "Role",
   "Full name",
   "Email",
@@ -49,16 +49,12 @@ const REGISTRATION_KEYS = [
   "#",
   "Registration ID",
   "Entry format",
-  "Team / alias",
+  "Participant",
   "Headcount",
-  "Capo (Team Lead)",
-  "Capo email",
-  "Capo mobile",
-  "Capo dept / year",
-  "Capo register no.",
-  "Partner",
-  "Partner year",
-  "Partner register no.",
+  "Email",
+  "Mobile",
+  "Department / year",
+  "Register no.",
   "Domain",
   "Heard about",
   "Submitted at",
@@ -122,10 +118,7 @@ function buildWorkbook(regs, totals) {
 
   for (const reg of regs) {
     const crew = [
-      { role: reg.headcount === 2 ? "Capo (Team Lead)" : "Solo Participant", fullName: reg.leader.fullName, email: reg.leader.email, mobile: reg.leader.phone, department: reg.leader.department, year: reg.leader.year, roll: reg.leader.rollNumber, gender: reg.leader.gender },
-      ...(reg.partner
-        ? [{ role: "Soldato (Partner)", fullName: reg.partner.fullName, email: "", mobile: "", department: "", year: reg.partner.year, roll: reg.partner.rollNumber, gender: "" }]
-        : []),
+      { role: "Participant", fullName: reg.leader.fullName, email: reg.leader.email, mobile: reg.leader.phone, department: reg.leader.department, year: reg.leader.year, roll: reg.leader.rollNumber, gender: reg.leader.gender },
     ];
 
     for (const p of crew) {
@@ -133,8 +126,8 @@ function buildWorkbook(regs, totals) {
       peopleRows.push({
         "#": n,
         "Registration ID": reg.registrationId,
-        "Entry format": reg.entryFormat === "duo" ? "Duo" : "Solo",
-        "Team / alias": reg.teamName,
+        "Entry format": "Solo",
+        "Participant": reg.teamName,
         "Role": p.role,
         "Full name": p.fullName,
         "Email": p.email,
@@ -168,17 +161,13 @@ function buildWorkbook(regs, totals) {
   const regRows = regs.map((reg, i) => ({
     "#": i + 1,
     "Registration ID": reg.registrationId,
-    "Entry format": reg.entryFormat === "duo" ? "Duo" : "Solo",
-    "Team / alias": reg.teamName,
+    "Entry format": "Solo",
+    "Participant": reg.leader.fullName,
     "Headcount": reg.headcount,
-    "Capo (Team Lead)": reg.leader.fullName,
-    "Capo email": reg.leader.email,
-    "Capo mobile": reg.leader.phone,
-    "Capo dept / year": `${reg.leader.department} / ${reg.leader.year}`,
-    "Capo register no.": reg.leader.rollNumber,
-    "Partner": reg.partner ? reg.partner.fullName : "-",
-    "Partner year": reg.partner ? reg.partner.year : "-",
-    "Partner register no.": reg.partner ? reg.partner.rollNumber : "-",
+    "Email": reg.leader.email,
+    "Mobile": reg.leader.phone,
+    "Department / year": `${reg.leader.department} / ${reg.leader.year}`,
+    "Register no.": reg.leader.rollNumber,
     "Domain": reg.domain,
     "Heard about": reg.heardAbout,
     "Submitted at": reg.submittedAt,
@@ -193,7 +182,7 @@ function buildWorkbook(regs, totals) {
   styleHeader(sheet, REGISTRATION_KEYS.length);
   sheet.getColumn(at(REGISTRATION_KEYS, "Submitted at")).numFmt = "dd-mmm-yyyy hh:mm";
   finishSheet(sheet, REGISTRATION_KEYS, [
-    5, 22, 12, 24, 11, 24, 26, 14, 26, 18, 20, 12, 19, 26, 18, 20,
+    5, 22, 12, 24, 11, 26, 14, 26, 18, 26, 18, 20,
   ]);
 
   /* ---- Summary ---- */
@@ -209,8 +198,6 @@ function buildWorkbook(regs, totals) {
     ["", ""],
     ["Total registrations", totals.registrations],
     ["Total participants", totals.participants],
-    ["Solo entries", totals.solo],
-    ["Duo entries", totals.duo],
     ["", ""],
     ["Generated at", new Date()],
   ];

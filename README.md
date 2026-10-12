@@ -1,10 +1,10 @@
 # Reverse Hackathon 2026 — Mission Deck
 
 Registration site for the Reverse Hackathon 2026, run by **The Whitehatians**, Department of
-Cyber Security, SRM Valliammai Engineering College. A three-hour defensive sprint: teams receive an
+Cyber Security, SRM Valliammai Engineering College. A three-hour defensive sprint: participants receive an
 already-built, deliberately vulnerable system and must find, patch and defend the fixes.
 
-**Live site:** <https://reverse-hackthon2k26.vercel.app/>
+**Live site:** <https://mission-deck-2026.vercel.app/>
 
 ## What is in this repo
 
@@ -26,7 +26,7 @@ front end, and no framework.
 ## Event facts
 
 - **Date:** Tuesday, 13 October 2026, 09:00 IST (gates 08:00, ledger closes 07:00)
-- **Format:** Solo or Duo; a Duo is one team lead plus exactly one partner (no larger teams)
+- **Format:** Solo only; every participant registers individually (no teams)
 - **Eligibility:** DEP-CYS students, years I–III
 - **Entry fee:** None. Registration is free; no payment or receipt is required.
 
@@ -84,33 +84,32 @@ The API talks to Supabase only from Vercel server functions. The browser never r
 
 ## Registration (free)
 
-Registration is free; no UPI payment, transaction ID, receipt, or proof is required. the server-side API validation layer
-is the server-side validation source of truth, and the page mirrors field errors onto the matching input.
+Registration is free; no UPI payment, transaction ID, receipt, or proof is required. The server-side API
+validation layer is the source of truth, and the page mirrors field errors onto the matching input.
 
-The form collects the entry format (Solo or Duo), a unique team name or Solo alias, and the primary
-participant's name, email, phone, year, department, gender and register number. Duo entries also
-require the partner's name, year and register number. Every entry includes one of 15 domains, how
-the participant heard about the event, and agreement to the rules.
+Registration is solo only. The form collects the primary participant's name, email, phone, year,
+department, gender and register number, one of 15 domains, how the participant heard about the event,
+and agreement to the rules.
 
 ### API
 
 | Route | Method | Auth | Purpose |
 | --- | --- | --- | --- |
-| `/api/register` | POST | none | Store one free registration. `201`, or `400` with `fieldErrors`, `409` on duplicate team/email, `403` after the deadline, `503` if Mongo is unreachable. |
-| `/api/admin/registrations` | GET | `x-admin-key` | Registration details and Solo/Duo/participant totals; legacy payment fields are excluded. |
+| `/api/register` | POST | none | Store one free registration. `201`, or `400` with `fieldErrors`, `409` on duplicate email, `403` after the deadline, `503` if Supabase is unreachable. |
+| `/api/admin/registrations` | GET | `x-admin-key` | Registration details and registration/participant totals; legacy payment fields are excluded. |
 | `/api/admin/export` | GET | `x-admin-key` | Streams a styled `.xlsx`. |
 
 The admin key is compared with `crypto.timingSafeEqual`, so it cannot be probed byte by byte.
 
 ## Scoring
 
-- `/admin.html` is the organiser control room. It lists team members, domain, problem statement, solution and provides a 0–30 mark input per team.
+- `/admin.html` is the organiser control room. It lists participants, domain, problem statement, solution and provides a 0–30 mark input per registration.
 - `/scoresheet.html` is a public, read-only leaderboard sorted by mark from highest to lowest; marks are entered only in the protected admin panel.
 
 ## Organiser dashboard
 
-Open `/admin.html`, paste the `ADMIN_KEY`, and the dashboard shows registrations, participants,
-and Solo/Duo totals. You can filter the table and download a workbook with three sheets:
+Open `/admin.html`, paste the `ADMIN_KEY`, and the dashboard shows registrations and participants
+totals. You can filter the table and download a workbook with three sheets:
 
 - **Participants** — one row per human. This is what the check-in desk wants.
 - **Registrations** — one row per entry.

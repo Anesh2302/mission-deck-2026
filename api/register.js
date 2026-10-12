@@ -2,7 +2,7 @@
  * POST /api/register
  *
  * Stores one free registration in Supabase.
- * Duplicate team names and duplicate participant emails are rejected with 409.
+ * Duplicate participant emails are rejected with 409.
  */
 
 const {
@@ -59,12 +59,9 @@ module.exports = async function handler(req, res) {
     const clash = await findRegistrationClash(value);
 
     if (clash) {
-      const emailHit = (clash.emails || []).some((e) => value.emails.includes(e));
-      const entryLabel = value.entryFormat === "duo" ? "team name" : "solo alias";
+      // Solo entries are unique by email, so any clash is an email clash.
       return res.status(409).json({
-        error: emailHit
-          ? "That email is already registered for this event - each participant sits once."
-          : `The ${entryLabel} "${value.teamName}" is already taken. Choose a different name.`,
+        error: "That email is already registered for this event - each participant sits once.",
       });
     }
 
@@ -80,7 +77,7 @@ module.exports = async function handler(req, res) {
       // Two people submitted at the same moment; the index caught it.
       if (e && (e.code === "23505" || e.status === 409)) {
         return res.status(409).json({
-          error: "That team name / solo alias or email was just registered by someone else. Try again.",
+          error: "That email was just registered by someone else. Try again.",
         });
       }
       throw e;

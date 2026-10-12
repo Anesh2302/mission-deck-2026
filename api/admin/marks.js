@@ -15,7 +15,7 @@ module.exports = async function handler(req, res) {
   }
   try {
     const updated = await updateRegistration(registrationId, { mark, updatedAt: new Date().toISOString() });
-    if (!updated) return res.status(404).json({ error: "Team record not found." });
+    if (!updated) return res.status(404).json({ error: "Registration record not found." });
     return res.status(200).json({ registrationId, mark });
   } catch (e) {
     console.error("admin mark failed", e);

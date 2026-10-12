@@ -282,13 +282,14 @@ function validateRegistration(body) {
     return { ok: false, fieldErrors: { _: ["Send a registration object."] } };
   }
 
-  const entryFormat = body.entryFormat === "duo" ? "duo" : "solo";
-  if (body.entryFormat !== "solo" && body.entryFormat !== "duo") {
-    fail("entryFormat", "Choose SOLO or TEAM OF TWO.");
+  // This event is solo only. Reject any payload that still looks like a duo
+  // or team submission so the public API cannot create partner records.
+  if (body.entryFormat !== undefined && body.entryFormat !== "solo") {
+    fail("entryFormat", "Registration is solo only.");
   }
-
-  const teamName = clean(body.teamName, 60);
-  if (teamName.length < 2) fail("teamName", "Enter a team name or solo alias.");
+  if (body.partner && typeof body.partner === "object" && Object.keys(body.partner).length > 0) {
+    fail("partner", "This event is solo only; no partner is accepted.");
+  }
 
   const leader = {
     fullName: clean(body.leader?.fullName, 80),
@@ -311,21 +312,6 @@ function validateRegistration(body) {
     fail("leader.rollNumber", "Register number accepts letters, numbers, / and - only.");
   }
 
-  let partner = null;
-  if (entryFormat === "duo") {
-    partner = {
-      fullName: clean(body.partner?.fullName, 80),
-      year: clean(body.partner?.year, 8),
-      rollNumber: clean(body.partner?.rollNumber, 40),
-    };
-    if (partner.fullName.length < 2) fail("partner.fullName", "Enter your partner's full name.");
-    if (!YEARS.includes(partner.year)) fail("partner.year", "Select your partner's year.");
-    if (partner.rollNumber.length < 3) fail("partner.rollNumber", "Enter your partner's register number.");
-    else if (!isRollNumber(partner.rollNumber)) {
-      fail("partner.rollNumber", "Register number accepts letters, numbers, / and - only.");
-    }
-  }
-
   const domain = clean(body.domain, 60);
   if (!DOMAINS.includes(domain)) fail("domain", "Choose one domain.");
 
@@ -336,26 +322,25 @@ function validateRegistration(body) {
 
   if (Object.keys(errors).length > 0) return { ok: false, fieldErrors: errors };
 
-  const headcount = entryFormat === "duo" ? 2 : 1;
-  // Only the lead is required to give an email, but index one if supplied so
-  // a partner cannot reuse an address that is already on the ledger.
-  const emails = [leader.email];
-  const partnerEmail = clean(body.partner?.email, 120).toLowerCase();
-  if (partnerEmail) emails.push(partnerEmail);
+  // Solo entries have no team name. The participant's own name doubles as the
+  // display label and their email is the uniqueness key, so the existing schema
+  // (team_name / team_name_key) keeps working without a migration.
+  const teamName = leader.fullName;
+  const teamNameKey = leader.email;
 
   return {
     ok: true,
     value: {
-      entryFormat,
+      entryFormat: "solo",
       teamName,
-      teamNameKey: teamName.toLowerCase(),
+      teamNameKey,
       leader,
-      partner,
-      emails,
+      partner: null,
+      emails: [leader.email],
       domain,
       heardAbout,
       agree: true,
-      headcount,
+      headcount: 1,
     },
   };
 }
@@ -418,10 +403,10 @@ function mailNotifyTo() {
 }
 
 function participantRows(reg) {
-  const rows = [
+  return [
     ["Role", "Name", "Email", "Mobile", "Year", "Register no."],
     [
-      reg.headcount === 2 ? "Capo (team lead)" : "Solo participant",
+      "Participant",
       reg.leader.fullName,
       reg.leader.email,
       reg.leader.phone,
@@ -429,17 +414,6 @@ function participantRows(reg) {
       reg.leader.rollNumber,
     ],
   ];
-  if (reg.headcount === 2 && reg.partner) {
-    rows.push([
-      "Soldato (partner)",
-      reg.partner.fullName,
-      "-",
-      "-",
-      reg.partner.year,
-      reg.partner.rollNumber,
-    ]);
-  }
-  return rows;
 }
 
 function buildConfirmationHtml(reg) {
@@ -469,11 +443,7 @@ function buildConfirmationHtml(reg) {
       </tr>
       <tr>
         <td style="padding:8px 0;color:#8f96a8">Format</td>
-        <td style="padding:8px 0">${reg.headcount === 2 ? "Duo" : "Solo"}</td>
-      </tr>
-      <tr>
-        <td style="padding:8px 0;color:#8f96a8">${reg.headcount === 2 ? "Team" : "Alias"}</td>
-        <td style="padding:8px 0">${escapeHtml(reg.teamName)}</td>
+        <td style="padding:8px 0">Solo</td>
       </tr>
       <tr>
         <td style="padding:8px 0;color:#8f96a8">Domain</td>
@@ -507,13 +477,12 @@ function buildConfirmationText(reg) {
     `Your seat in the ledger is confirmed for ${EVENT_NAME}.`,
     "",
     `Registration ID : ${reg.registrationId}`,
-    `Format          : ${reg.headcount === 2 ? "Duo" : "Solo"}`,
-    `${reg.headcount === 2 ? "Team" : "Alias"}         : ${reg.teamName}`,
+    "Format          : Solo",
     `Domain          : ${reg.domain}`,
     "Entry fee       : Free (no payment required)",
     `Event           : ${EVENT_DATE_LABEL}, 09:00 IST`,
     "",
-    "Participants",
+    "Participant",
     ...participantRows(reg).map((r) => "  " + r.filter(Boolean).join(" | ")),
     "",
     `Gates open 08:00 IST. Venue: ${COLLEGE}.`,
